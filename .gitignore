@@ -1,0 +1,5 @@
+previews/
+clip-start-frames/
+source/node_modules/
+source/dist/
+*.log
