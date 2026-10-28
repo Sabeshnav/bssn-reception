@@ -50,7 +50,11 @@ Content facts:
 - Wedding reception, Wednesday 18.11.2026, 6:00 PM.
 - City Square Convention Center (A/C), Vathalagundu Road, Pillaiyarnatham, Dindigul.
 - Groom D. Bathri Sri, son of L. Dharmaraj and D. Jaya; sister D. Samuthira.
-- Bride M. Sri Nandhini.
+- Bride M. Sri Nandhini, daughter of the late (தெய்வத்திரு) Mutharasu and Muthu Kavitha.
+- The Tamil date is பராபவ வருடம் கார்த்திகை மாதம் 02 ஆம் நாள், from the family's printed card.
+- Initials are in English everywhere (L., D., M., T.), as the family asked.
+- Appa's post is திண்டுக்கல் கிழக்கு மாவட்ட செயலாளர் · தமிழக வெற்றிக் கழகம், shown under his name in the welcome section.
+- Font note: Arima breaks ஸ்ரீ into separate letters, so any text containing ஸ்ரீ uses Noto Serif Tamil or Tiro Tamil.
 
 ## Section 3: the family welcome (TVK leadership style)
 
@@ -107,14 +111,10 @@ This is a cinematic end card for **T. Lalith Kumar**, Madurai Zonal Co-ordinator
 
 ## Still to swap in
 
-- **Lalith's Tamil name.** It's written த. லலித் குமார்; confirm the Tamil initial for "T".
 
-- **Welcome lines** for each person (Appa's is a draft), and Appa's party post if it should be shown.
+- **Welcome lines** for each person (Appa's is a draft).
 - **Welcome lines** for Amma and the sister are drafts too. If Bathri is the elder brother, the sister's line can say அண்ணன்.
 - To add a person: run `clip/pipeline.py <clip.mp4> <name>`, add a `.wl-person` block, add their entry in `createWelcome(...)`, and raise `--n` on `#welcome`.
 
-- **The bride's parents' names.** The bride's column has none yet.
-- **Tamil initials.** The page uses த./ம./ல. Switch to English D./M./L. if the printed card uses those.
-- **Tamil month and day.** These can be added to the date line, for example "கார்த்திகை மாதம் 2-ஆம் நாள", if they're taken from the printed card.
 - Better portrait photos, if Lalith sends them. The current photos are passport-style; drop new ones into `assets/` and rebuild.
 - The Vijay artwork is the same signed painting used on the TVK site. Get the artist's OK before the link goes public.

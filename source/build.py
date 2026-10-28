@@ -19,6 +19,7 @@ faces = [('Cinzel', 600, 'cinzel/files/cinzel-latin-600-normal.woff2', None), ('
          ('Noto Serif Tamil', 700, 'noto-serif-tamil/files/noto-serif-tamil-tamil-700-normal.woff2', 'U+0B80-0BFF,U+200C-200D,U+25CC'),
          ('Noto Serif Tamil', 400, 'noto-serif-tamil/files/noto-serif-tamil-latin-400-normal.woff2', 'U+0000-00FF,U+2013'),
          ('Noto Serif Tamil', 600, 'noto-serif-tamil/files/noto-serif-tamil-latin-600-normal.woff2', 'U+0000-00FF,U+2013'),
+         ('Noto Serif Tamil', 700, 'noto-serif-tamil/files/noto-serif-tamil-latin-700-normal.woff2', 'U+0000-00FF,U+2013'),
          ('Arima', 700, 'arima/files/arima-tamil-700-normal.woff2', 'U+0B80-0BFF,U+200C-200D,U+25CC'),
          ('Arima', 700, 'arima/files/arima-latin-700-normal.woff2', 'U+0000-00FF')]
 css = ''.join(f"@font-face{{font-family:'{n}';font-weight:{w};font-display:swap;src:url({b64(fs/p, 'font/woff2')}) format('woff2'){';unicode-range:'+u if u else ''}}}" for n, w, p, u in faces)
