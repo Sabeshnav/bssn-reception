@@ -108,7 +108,7 @@ export function createDecor(canvas) {
     const M = (portrait ? 22 : 28) * dpr;
     golds = { o: [1, 2, 3].map((s) => marigold(M, 'orange', s)), y: [4, 5, 6].map((s) => marigold(M, 'yellow', s)), r: [7, 8].map((s) => marigold(M * 0.9, 'red', s)) };
     buds = [1, 2].map((s) => jasmineBud(12 * dpr, s));
-    lampH = Math.min(H * (portrait ? 0.2 : 0.34), W * (portrait ? 0.34 : 0.2)); lamp = paintLamp(lampH);
+    lampH = Math.min(H * (portrait ? 0.2 : 0.28), W * (portrait ? 0.34 : 0.15)); lamp = paintLamp(lampH);
   }
   // ---- thoranam across the top
   function thoranam(t, drop) {
@@ -157,7 +157,7 @@ export function createDecor(canvas) {
   function lamps(t, lit, show) {
     if (show <= 0) return;
     const lw = lamp.c.width, lh = lamp.c.height;
-    const spots = [[W * (portrait ? 0.0 : 0.09) - lw * (portrait ? 0.18 : 0.5), H - lh * (portrait ? 0.92 : 1.0)], [W * (portrait ? 1 : 0.91) - lw * (portrait ? 0.82 : 0.5), H - lh * (portrait ? 0.92 : 1.0)]];
+    const spots = [[W * (portrait ? 0.0 : 0.06) - lw * (portrait ? 0.18 : 0.5), H - lh * (portrait ? 0.92 : 1.0)], [W * (portrait ? 1 : 0.94) - lw * (portrait ? 0.82 : 0.5), H - lh * (portrait ? 0.92 : 1.0)]];
     spots.forEach(([lx, ly], li) => {
       g.globalAlpha = show;
       // floor glow
@@ -188,5 +188,12 @@ export function createDecor(canvas) {
     thoranam(t, o.thoranam);
     lamps(t, o.lit, o.lamps);
   }
-  return { resize, render };
+  // how far the side décor reaches into the screen (css px), so content can keep clear of it
+  function sides() {
+    const lw = lamp.c.width, M = golds.o[0].width;
+    const lampRight = portrait ? lw * 0.82 : W * 0.06 + lw * 0.5;
+    const strandRight = (portrait ? W * 0.035 : W * 0.075) + M * 0.6;
+    return { lamp: lampRight / dpr, strand: strandRight / dpr, lampTop: (H - lamp.c.height * (portrait ? 0.92 : 1)) / dpr, strandBottom: H * (portrait ? 0.34 : 0.62) / dpr };
+  }
+  return { resize, render, sides };
 }

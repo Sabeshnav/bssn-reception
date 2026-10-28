@@ -92,6 +92,35 @@ export function createWelcome(section, clips) {
     const go = p.video.play(); if (go && go.catch) go.catch(() => { /* autoplay blocked: start on first touch */ addEventListener('pointerdown', () => p.video.play(), { once: true }); });
   }
   function reset(i) { const p = P[i]; if (!p) return; p.state = 'idle'; p.video.pause(); p.video.currentTime = 0; p.copy.classList.remove('in'); }
+  // keep each figure clear of its text at every screen size: shrink the figure if they would touch
+  function fit() {
+    const W = stage.clientWidth, H = stage.clientHeight, phone = W / H < 0.8;
+    const dots = section.querySelector('.wl-dots'), topLimit = dots.offsetTop + dots.offsetHeight + 10;
+    for (const p of P) {
+      const fb = p.el.querySelector('.wl-figbox'), copy = p.copy;
+      fb.style.height = ''; copy.style.top = ''; copy.style.translate = ''; copy.style.setProperty('--wk', 1);
+      // text block: scale it down until it fits between the dots and the bottom of the screen
+      const room = H - topLimit - 14;
+      for (let i = 0; i < 4 && copy.offsetHeight > room; i++) copy.style.setProperty('--wk', Math.max(0.55, (+copy.style.getPropertyValue('--wk') || 1) * room / copy.offsetHeight * 0.98).toFixed(3));
+      if (!phone && copy.offsetTop - copy.offsetHeight / 2 < topLimit) { copy.style.top = topLimit + 'px'; copy.style.translate = '0 0'; }
+      const ar = fb.offsetWidth / Math.max(1, fb.offsetHeight);
+      if (phone) {
+        const copyBottom = copy.offsetTop + copy.offsetHeight;          // copy sits above the figure
+        const maxH = H - copyBottom - 12;
+        if (fb.offsetHeight > maxH) fb.style.height = Math.max(H * 0.22, maxH) + 'px';
+      } else {
+        const fx = fb.offsetLeft + fb.offsetWidth / 2;                    // figure centre (translate -50% is already in offsetLeft? no: compute)
+        const cxp = parseFloat(getComputedStyle(fb).left);                // the anchor, before the -50% shift
+        const copyLeft = copy.offsetLeft;
+        const copyTop = copy.style.top ? copy.offsetTop : copy.offsetTop - copy.offsetHeight / 2;
+        const half = fb.offsetWidth / 2, room = copyLeft - 24 - cxp;     // space between the anchor and the text
+        if (half * 0.94 > room) fb.style.height = Math.max(H * 0.3, (room / 0.94) * 2 / ar) + 'px';
+        // a figure taller than the stage would push the head under the heading
+        const maxH = H - 70; if (fb.offsetHeight > maxH) fb.style.height = maxH + 'px';
+        void fx;
+      }
+    }
+  }
   // the gold ring and rays sit behind the current person's head
   function aimHalo() {
     const p = P[Math.max(0, active)]; const fb = p.el.querySelector('.wl-figbox');
@@ -114,7 +143,7 @@ export function createWelcome(section, clips) {
     }
     if (r.top > innerHeight * 0.9) P.forEach((_, k) => reset(k));    // scrolled back above: replay next time
   }
-  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', () => { onScroll(); aimHalo(); });
+  addEventListener('scroll', onScroll, { passive: true }); addEventListener('resize', () => { fit(); onScroll(); aimHalo(); });
 
   function frame() {
     for (const p of P) {
@@ -146,6 +175,6 @@ export function createWelcome(section, clips) {
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);
-  onScroll(); aimHalo();
-  return { people: P, enter, reset, onScroll };
+  fit(); onScroll(); aimHalo();
+  return { fit, people: P, enter, reset, onScroll };
 }

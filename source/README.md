@@ -95,6 +95,12 @@ This is a cinematic end card for **T. Lalith Kumar**, Madurai Zonal Co-ordinator
 3. An anamorphic flare opens across the screen, gold dust drifts, and a light sweeps across the letters every few seconds.
 4. The Tamil name, the post in English and Tamil, and a TVK colour band follow.
 
+## Fitting every screen size
+
+- **Hero:** the names, photo frames, Tamil line, date and countdown sit in one stacked block (`.hcontent`) between the leader and the bottom of the screen. `layout()` in `main.js` shrinks everything in that block together (`--k`) until it fits the height and width, and keeps it clear of the lamps and garland strands (`--side`, from `decor.sides()`). The leader's final size is capped to the space above the names.
+- **Welcome:** `fit()` in `welcome.js` scales each person's text (`--wk`) so it fits between the dots and the bottom, keeps it below the heading, and shrinks the figure if it would touch the text.
+- **Audit:** `python3 tools/overlap.py` loads the site at 19 screen sizes, from 320×568 phones and 667×375 landscape phones up to 1920×940 desktops and short 1280×400 windows. It reports any text or picture that overlaps another, touches a lamp or garland, or runs off the screen. It last reported NO OVERLAPS.
+
 ## Files
 
 - `src/main.js`: the timeline (`T`), layout, the pen's path and the countdown. `WEDDING` is the reception start (18 Nov 2026, 6:00 PM IST) for the countdown.

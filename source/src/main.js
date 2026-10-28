@@ -60,7 +60,26 @@ Promise.all([load(SRC.start), load(SRC.end), load(SRC.flag), load(SRC.groom), lo
     const r = hero.getBoundingClientRect(); cssW = r.width; cssH = r.height; portrait = cssW / cssH < 0.8;
     const dpr = Math.min(devicePixelRatio || 1, 2);
     for (const l of [vj, bg, decor, fx]) l.resize(cssW, cssH, dpr);
-    for (const p of pfs) {                     // paint each medallion at its displayed size
+    // fit the names + date block into the space under the leader: shrink everything in it together (--k)
+    const hc = $('.hcontent'), cp = $('.couple'), mt = $('.meta');
+    const gapPx = () => parseFloat(getComputedStyle(hc).rowGap) || 0;
+    const sd = decor.sides();                  // keep the names, frames and date clear of the lamps and garlands
+    hero.style.setProperty('--side', Math.ceil((portrait ? sd.lamp : Math.max(sd.lamp, sd.strand)) + 8) + 'px');
+    let k = 1; hero.style.setProperty('--k', 1);
+    for (let i = 0; i < 4; i++) {
+      const need = cp.offsetHeight + mt.offsetHeight + gapPx(), avail = hc.clientHeight - 4;
+      // widest real line of text (centred text can overflow on both sides, which scrollWidth misses)
+      const hr = hc.getBoundingClientRect();
+      let wf = 1;
+      for (const el of hc.querySelectorAll('.ta, .when, .count, .name-svg, .w')) {
+        const er = el.getBoundingClientRect(), wNeed = er.width, overL = hr.left - er.left, overR = er.right - hr.right;
+        if (overL > 0.5 || overR > 0.5) wf = Math.min(wf, hr.width / (wNeed + 2 * Math.max(overL, overR, 0) * 0 + Math.max(0, overL) + Math.max(0, overR) + 2));
+      }
+      const f = Math.min(avail / need, wf);
+      if (f >= 0.995) break;
+      k = Math.max(0.4, k * f * 0.99); hero.style.setProperty('--k', k.toFixed(4));
+    }
+    for (const p of pfs) {                     // medallions repainted at their fitted size
       const D = p.el.offsetWidth || 200;
       const cv = p.el.querySelector('canvas'); const f = paintFrame(p.photo, Math.round(D * dpr), { seed: p.seed, side: p.side });
       cv.width = f.canvas.width; cv.height = f.canvas.height; cv.getContext('2d').drawImage(f.canvas, 0, 0); p.f = f;
@@ -68,7 +87,7 @@ Promise.all([load(SRC.start), load(SRC.end), load(SRC.flag), load(SRC.groom), lo
     // where the leader ends up: small, top centre, above the names
     const couple = $('.couple').getBoundingClientRect();
     for (const p of pfs) { p.cx = couple.left - r.left + p.el.offsetLeft + p.el.offsetWidth / 2; p.cy = couple.top - r.top + p.el.offsetTop + p.el.offsetWidth * (p.f.cy / p.f.canvas.width); }
-    const targetH = cssH * (portrait ? 0.25 : 0.32);
+    const targetH = Math.min(cssH * (portrait ? 0.25 : 0.32), (couple.top - r.top) - cssH * 0.04);   // never taller than the space above the names
     L.zoomF = targetH / vj.figH();
     L.oyF = (couple.top - r.top) + cssH * (portrait ? 0.025 : 0.03) - cssH;     // bust bottom tucked just behind the names block
     L.flagY = cssH * (portrait ? 0.17 : 0.22); L.flagW = Math.min(cssW * (portrait ? 1.05 : 0.6), cssH * (portrait ? 0.62 : 0.85) * 1.5);
@@ -163,5 +182,5 @@ Promise.all([load(SRC.start), load(SRC.end), load(SRC.flag), load(SRC.groom), lo
   window.__welcome = createWelcome(document.getElementById('welcome'), [{ src: clipURL('__VID_APPA__'), meet: 1.7, head: 0.26 }, { src: clipURL('__VID_AMMA__'), meet: 1.15, head: 0.3, tfade: 0.035 }, { src: clipURL('__VID_SIS__'), meet: 1.45, head: 0.38 }]);
   window.__venue = createVenue(document.getElementById('venue'));
   window.__credit = createCredit(document.getElementById('credit'));
-  window.__hero = { T, seek: (t) => { paused = t; frame(t); }, play: () => { paused = null; t0 = performance.now() / 1000; }, layout };
+  window.__hero = { sides: () => decor.sides(), T, seek: (t) => { paused = t; frame(t); }, play: () => { paused = null; t0 = performance.now() / 1000; }, layout };
 });
