@@ -30,9 +30,14 @@ What plays (about 8.6 seconds, starts on load):
 
 **Reduced motion:** visitors who have reduced motion turned on see the final state straight away.
 
-## Section 2: the invitation on olai suvadi (scroll-driven)
+## Section 2: the invitation on olai suvadi (scroll-triggered, then plays on its own)
 
-The section is pinned and scrolls through about 3.7 screens:
+When the section reaches the top of the screen, it plays a timed sequence of about 12 seconds (opening 2 s, writing 8.5 s, seal 1.6 s; `T_OPEN`, `T_WRITE` and `T_END` in `olai.js`). The section is pinned for 2.4 screens. Scrolling past finishes it instantly, and scrolling back above it resets it. For smoothness:
+- the leaf shadows are baked into their canvases, not done with CSS filters;
+- only lines that change are restyled;
+- the stylus uses cached line positions, so it needs no layout reads per frame.
+
+The sequence:
 1. **The closed bundle.** It sits between carved rosewood covers with brass studs and a brass "உ" plate, tied with a red cord and knot.
 2. **It opens.** The cord unwinds, the covers part (top up, bottom down), and five palm leaves fan out. The red cord runs through their holes and ends in a tassel.
 3. **The stylus writes.** An iron stylus with a brass handle etches each line from left to right, with dark ink settling into the scratches. This covers:

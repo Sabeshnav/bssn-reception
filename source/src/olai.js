@@ -24,7 +24,15 @@ function leafPath(g, w, h) {
   g.bezierCurveTo(0, h * 0.3, e * 0.35, 0, e, 0); g.closePath();
 }
 export const HOLES = [0.085, 0.915];
+export const SHADOW_PAD = 16;
 function paintLeaf(w, h, dpr, seed) {
+  const leaf = paintLeafBody(w, h, dpr, seed), M = SHADOW_PAD * dpr;
+  const out = canvasOf(leaf.width + M * 2, leaf.height + M * 2), o = out.getContext('2d');
+  o.shadowColor = 'rgba(0,0,0,.5)'; o.shadowBlur = 10 * dpr; o.shadowOffsetY = 6 * dpr; o.drawImage(leaf, M, M);
+  o.shadowColor = 'rgba(0,0,0,.4)'; o.shadowBlur = 1.5 * dpr; o.shadowOffsetY = 1 * dpr; o.drawImage(leaf, M, M);
+  return out;
+}
+function paintLeafBody(w, h, dpr, seed) {
   const W = Math.round(w * dpr), H = Math.round(h * dpr), c = canvasOf(W, H), g = c.getContext('2d'), r = rng(seed * 97 + 5);
   g.scale(dpr, dpr);
   leafPath(g, w, h); g.save(); g.clip();
@@ -195,6 +203,7 @@ export function createOlai(section) {
     stackShift = Math.max(0, stackH - avail);
     fitScale = Math.min(1, avail / stackH); if (fitScale < 0.7) fitScale = 1;   // too small to read: keep the scrolled view instead
     // line weights for the writing timeline
+    lines.forEach((ln) => { const r = ln.vt.getBoundingClientRect(); ln.x = r.left - stR.left; ln.y = r.top - stR.top; ln.w = r.width; ln.h = r.height; ln.k = -1; });
     let tot = 0; lines.forEach((ln) => { ln.wt = Math.max(4, ln.vt.textContent.length); tot += ln.wt; });
     let acc = 0; lines.forEach((ln) => { ln.a = acc / tot; acc += ln.wt; ln.b = acc / tot; });
     for (const sv of [cordSvg, wrapSvg]) { sv.setAttribute('viewBox', `0 0 ${stack.offsetWidth} ${stackH}`); sv.style.width = stack.offsetWidth + 'px'; sv.style.height = stackH + 'px'; }
@@ -263,8 +272,10 @@ export function createOlai(section) {
     let cur = null;
     for (const ln of lines) {
       const k = clamp((wp - ln.a) / (ln.b - ln.a));
-      ln.vt.style.clipPath = k >= 1 ? 'none' : `inset(-30% ${((1 - k) * 100).toFixed(2)}% -30% 0)`;
-      ln.vt.style.setProperty('--fresh', k > 0 && k < 1 ? 1 : 0);
+      if (k !== ln.k) {                                        // touch only the lines that changed
+        ln.vt.style.clipPath = k >= 1 ? 'none' : `inset(-30% ${((1 - k) * 100).toFixed(2)}% -30% 0)`;
+        ln.k = k;
+      }
       if (k > 0 && k < 1) cur = { ln, k };
     }
     // keep the line being written in view on short screens
@@ -277,8 +288,7 @@ export function createOlai(section) {
     heads.forEach((h) => { h.style.opacity = Math.min(+h.style.opacity, hk); });
     // the stylus rides the edge of the line being etched
     if (cur) {
-      const r = cur.ln.vt.getBoundingClientRect(), s = stage.getBoundingClientRect();
-      const x = r.left - s.left + r.width * cur.k, y = r.top - s.top + r.height * 0.62;
+      const x = cur.ln.x + cur.ln.w * cur.k, y = cur.ln.y - sh * keep + cur.ln.h * 0.62;
       const jig = Math.sin(performance.now() / 38) * 1.2;
       stylus.style.opacity = 1; stylus.style.transform = `translate(${x.toFixed(1)}px, ${(y + jig).toFixed(1)}px)`;
     } else stylus.style.opacity = 0;
@@ -290,17 +300,32 @@ export function createOlai(section) {
   }
 
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function progress() {
-    const r = section.getBoundingClientRect(), total = section.offsetHeight - stage.offsetHeight;
-    return reduce ? 1 : clamp(-r.top / Math.max(1, total));
+  // timeline in seconds: open the bundle, write, then seal
+  const T_OPEN = 2.0, T_WRITE = 8.5, T_END = 1.6;
+  const pAt = (t) => t < T_OPEN ? 0.28 * t / T_OPEN
+    : t < T_OPEN + T_WRITE ? 0.28 + 0.62 * (t - T_OPEN) / T_WRITE
+    : Math.min(1, 0.9 + 0.1 * (t - T_OPEN - T_WRITE) / T_END);
+  let state = 'idle', t0 = 0, raf = 0;
+  const now = () => performance.now() / 1000;
+  const loop = () => {
+    raf = 0;
+    if (state !== 'play') return;
+    const p = pAt(now() - t0);
+    render(p, true);
+    if (p >= 1) { state = 'done'; return; }
+    raf = requestAnimationFrame(loop);
+  };
+  function play() { if (state !== 'idle') return; state = 'play'; t0 = now(); if (!raf) raf = requestAnimationFrame(loop); }
+  function finish() { if (raf) cancelAnimationFrame(raf); raf = 0; state = 'done'; render(1, true); }
+  function reset() { if (raf) cancelAnimationFrame(raf); raf = 0; state = 'idle'; render(0, true); }
+  function onScroll() {
+    const r = section.getBoundingClientRect(), vh = innerHeight;
+    if (state === 'idle' && r.top <= vh * 0.2 && r.bottom > vh * 0.6) reduce ? finish() : play();
+    else if (state === 'play' && r.bottom < 0) finish();                 // scrolled right past it: show the finished card
+    else if (state !== 'idle' && r.top > vh * 0.95) reset();             // scrolled back above: play again next time
   }
-  let raf = 0;
-  const tick = () => { raf = 0; render(progress()); };
-  addEventListener('scroll', () => { if (!raf) raf = requestAnimationFrame(tick); }, { passive: true });
-  // the stylus jiggles while writing even if the scroll pauses
-  const idle = () => { if (lastP > 0.28 && lastP < 0.9) render(lastP, true); requestAnimationFrame(idle); };
-  requestAnimationFrame(idle);
+  addEventListener('scroll', onScroll, { passive: true });
   addEventListener('resize', () => layout());
-  layout();
-  return { layout, render, progress: () => lastP };
+  layout(); render(0, true); onScroll();
+  return { layout, render, play, finish, reset, pAt, duration: T_OPEN + T_WRITE + T_END, state: () => state, progress: () => lastP };
 }
